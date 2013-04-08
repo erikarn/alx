@@ -29,7 +29,7 @@
 #include <linux/vmalloc.h>
 #include <net/ip6_checksum.h>
 
-#include "alx_reg.h"
+#include "hw/alx_reg.h"
 #include "alx_hw.h"
 #include "alx.h"
 

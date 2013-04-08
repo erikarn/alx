@@ -24,7 +24,7 @@
 #include <linux/interrupt.h>
 #include <asm/byteorder.h>
 
-#include "alx_reg.h"
+#include "hw/alx_reg.h"
 #include "alx_hw.h"
 #include "alx.h"
 

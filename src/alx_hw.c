@@ -18,7 +18,7 @@
 #include <linux/etherdevice.h>
 #include <linux/mdio.h>
 
-#include "alx_reg.h"
+#include "hw/alx_reg.h"
 #include "alx_hw.h"
 
 #define ALX_REV_A(_r) ((_r) == ALX_REV_A0 || (_r) == ALX_REV_A1)
