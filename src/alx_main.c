@@ -691,7 +691,7 @@ static bool alx_dispatch_skb(struct alx_rx_queue *rxq)
 		/* vlan tag */
 		if (rrd->word3 & (1 << RRD_VLTAGGED_SHIFT)) {
 			u16 tag = ntohs(FIELD_GETX(rrd->word2, RRD_VLTAG));
-			__vlan_hwaccel_put_tag(skb, ntohs(tag));
+			__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), ntohs(tag));
 		}
 		qnum = FIELD_GETX(rrd->word2, RRD_RSSQ) % adpt->nr_rxq;
 		tmp_rxq = ALX_CAP(&adpt->hw, MRQ) ?
@@ -1129,7 +1129,7 @@ static int alx_init_sw(struct alx_adapter *adpt)
 static void alx_set_vlan_mode(struct alx_hw *hw,
 			      netdev_features_t features)
 {
-	if (features & NETIF_F_HW_VLAN_RX)
+	if (features & NETIF_F_HW_VLAN_CTAG_RX)
 		hw->rx_ctrl |= ALX_MAC_CTRL_VLANSTRIP;
 	else
 		hw->rx_ctrl &= ~ALX_MAC_CTRL_VLANSTRIP;
@@ -1145,10 +1145,10 @@ static netdev_features_t alx_fix_features(struct net_device *netdev,
 	 * Since there is no support for separate rx/tx vlan accel
 	 * enable/disable make sure tx flag is always in same state as rx.
 	 */
-	if (features & NETIF_F_HW_VLAN_RX)
-		features |= NETIF_F_HW_VLAN_TX;
+	if (features & NETIF_F_HW_VLAN_CTAG_RX)
+		features |= NETIF_F_HW_VLAN_CTAG_TX;
 	else
-		features &= ~NETIF_F_HW_VLAN_TX;
+		features &= ~NETIF_F_HW_VLAN_CTAG_TX;
 
 	if (netdev->mtu > ALX_MAX_TSO_PKT_SIZE)
 		features &= ~(NETIF_F_TSO | NETIF_F_TSO6);
@@ -1163,7 +1163,7 @@ static int alx_set_features(struct net_device *netdev,
 	struct alx_adapter *adpt = netdev_priv(netdev);
 	netdev_features_t changed = netdev->features ^ features;
 
-	if (!(changed & NETIF_F_HW_VLAN_RX))
+	if (!(changed & NETIF_F_HW_VLAN_CTAG_RX))
 		return 0;
 
 	alx_set_vlan_mode(&adpt->hw, features);
@@ -2610,10 +2610,10 @@ alx_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	netdev->hw_features = NETIF_F_SG	 |
 			      NETIF_F_HW_CSUM	 |
-			      NETIF_F_HW_VLAN_RX |
+			      NETIF_F_HW_VLAN_CTAG_RX |
 			      NETIF_F_TSO        |
 			      NETIF_F_TSO6;
-	netdev->features = netdev->hw_features | NETIF_F_HW_VLAN_TX;
+	netdev->features = netdev->hw_features | NETIF_F_HW_VLAN_CTAG_TX;
 
 	/* read permanent mac addr from register or eFuse */
 	if (alx_get_perm_macaddr(hw, hw->perm_addr)) {
@@ -2805,16 +2805,4 @@ static struct pci_driver alx_driver = {
 	.driver.pm   = ALX_PM_OPS,
 };
 
-
-static int __init alx_init_module(void)
-{
-	pr_info("%s\n", alx_drv_desc);
-	return pci_register_driver(&alx_driver);
-}
-module_init(alx_init_module);
-
-static void __exit alx_exit_module(void)
-{
-	pci_unregister_driver(&alx_driver);
-}
-module_exit(alx_exit_module);
+module_pci_driver(alx_driver);
